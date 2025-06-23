@@ -1,0 +1,23 @@
+{
+  "name": "devpulse-backend",
+  "version": "1.0.0",
+  "description": "tinder for devs",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
+  },
+  "keywords": [
+    "nodejs",
+    "javascript",
+    "expressjs",
+    "mongodb",
+    "backend",
+    "mern"
+  ],
+  "author": "Shresth",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
