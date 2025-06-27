@@ -56,7 +56,7 @@ app.delete("/user", async (req, res) => {
   }
 });
 
-// UPDATE: update a user by
+// PATCH: update a user by id
 app.patch("/user", async (req, res) => {
   try {
     const data = req.body;
@@ -68,6 +68,20 @@ app.patch("/user", async (req, res) => {
 
     if (!user) res.status(404).send("User not found");
     else res.send("user updated succesfully");
+  } catch (err) {
+    res.status(400).send("Something went wrong");
+  }
+});
+
+// PATCH: update a user by emailid
+app.patch("/userByEmail", async (req, res) => {
+  try {
+    const data = req.body;
+    const userEmailId = req.body.emailId;
+
+    const user = await User.updateOne({ emailId: userEmailId }, data);
+    if (!user) res.status(404).send("User not found");
+    else res.send("User updated successfully");
   } catch (err) {
     res.status(400).send("Something went wrong");
   }
