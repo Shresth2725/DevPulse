@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const validator = require("validator");
 
 const userSchema = new mongoose.Schema(
   {
@@ -19,12 +20,20 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
+      validate(value) {
+        if (!validator.isEmail(value)) {
+          throw new Error("Invalid Email ID");
+        }
+      },
     },
     password: {
       type: String,
       required: true,
-      minLength: 4,
-      maxLength: 50,
+      validate(value) {
+        if (!validator.isStrongPassword(value)) {
+          throw new Error("Not a Strong Password");
+        }
+      },
     },
     age: {
       type: Number,
@@ -41,6 +50,11 @@ const userSchema = new mongoose.Schema(
     photoUrl: {
       type: String,
       default: "https://sclpa.com/wp-content/uploads/2022/10/dummy-img-1.jpg",
+      validate(value) {
+        if (!validator.isURL(value)) {
+          throw new Error("Invalid Photo URL");
+        }
+      },
     },
     about: {
       type: String,
