@@ -9,7 +9,10 @@ app.use(express.json());
 // POST: dynamic signup api
 app.post("/signup", async (req, res) => {
   const user = new User(req.body);
-
+  req.body.firstName = req.body?.firstName?.trim();
+  req.body.lastName = req.body?.lastName?.trim();
+  req.body.about = req.body?.about?.trim();
+  req.body.emailId = req.body?.emailId?.toLowerCase().trim();
   try {
     await user.save();
     res.send("User add succesfully");
@@ -57,10 +60,21 @@ app.delete("/user", async (req, res) => {
 });
 
 // PATCH: update a user by id
-app.patch("/user", async (req, res) => {
+app.patch("/user/:userId", async (req, res) => {
   try {
     const data = req.body;
-    const userId = req.body.userId;
+    const userId = req.params.userId;
+
+    const ALLOWED_UPDATES = ["photoURL", "about", "gender", "age", "skills"];
+
+    const isUpdateAllowed = Object.keys(data).every((k) =>
+      ALLOWED_UPDATES.includes(k)
+    );
+
+    if (!isUpdateAllowed) {
+      throw new Error("Update not allowed");
+    }
+
     const user = await User.findByIdAndUpdate({ _id: userId }, data, {
       returnDocument: "after",
       runValidators: true,
