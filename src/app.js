@@ -6,27 +6,21 @@ const bcrypt = require("bcrypt");
 const validator = require("validator");
 
 const app = express();
-
 app.use(express.json());
 
-// POST: dynamic signup api
+// POST: signup
 app.post("/signup", async (req, res) => {
   try {
-    // Validation of Data
     validateSignUpData(req);
 
-    // Sanitization of Data
     req.body.firstName = req.body?.firstName?.trim();
     req.body.lastName = req.body?.lastName?.trim();
     req.body.emailId = req.body?.emailId?.toLowerCase().trim();
 
     const { firstName, lastName, emailId, password } = req.body;
 
-    // Encrpting the password
     const passwordHash = await bcrypt.hash(password, 10);
-    console.log(passwordHash);
 
-    // Creating a new instance of User Model
     const user = new User({
       firstName,
       lastName,
@@ -35,129 +29,138 @@ app.post("/signup", async (req, res) => {
     });
 
     await user.save();
-    res.send("User add succesfully");
+    res.send("User added successfully");
   } catch (err) {
-    res.status(400).send("Error saving the user: " + err.message);
+    res.status(400).send(`Signup failed: ${err.message}`);
   }
 });
 
-// POST: Login api
+// POST: login
 app.post("/login", async (req, res) => {
   try {
     const { emailId, password } = req.body;
 
     if (!validator.isEmail(emailId)) {
-      throw new Error("Email not valid");
+      throw new Error("Invalid email address.");
     }
 
-    const user = await User.findOne({ emailId: emailId });
-
+    const user = await User.findOne({ emailId });
     if (!user) {
-      return res.status(404).send("User not found");
+      return res.status(404).send("No user found with the provided email.");
     }
 
-    const hashedPassword = user.password;
-
-    const isPasswordValid = await bcrypt.compare(password, hashedPassword);
-
+    const isPasswordValid = await bcrypt.compare(password, user.password);
     if (isPasswordValid) {
-      res.send("Login Successfully");
+      res.send("Login successful");
     } else {
-      throw new Error("Password is not correct");
+      throw new Error("Incorrect password. Please try again.");
     }
   } catch (err) {
-    res.status(400).send("Something went wrong: " + err.message);
+    res.status(400).send(`Login failed: ${err.message}`);
   }
 });
 
 // GET: get user by email
 app.get("/user", async (req, res) => {
-  const userEmail = req.body.emailId;
   try {
+    const userEmail = req.body.emailId;
     const users = await User.find({ emailId: userEmail });
+
     if (users.length === 0) {
-      res.status(404).send("user not found");
+      return res.status(404).send("No user found with the specified email.");
     }
+
     res.send(users);
   } catch (err) {
-    res.status(400).send("Something went wrong!");
+    res.status(400).send(`Unable to fetch user: ${err.message}`);
   }
 });
 
-// GET: get all user data api(profile)
+// GET: get all users
 app.get("/feed", async (req, res) => {
   try {
     const users = await User.find({});
     res.send(users);
   } catch (err) {
-    res.status(400).send("Something went wrong");
+    res.status(400).send(`Unable to fetch users: ${err.message}`);
   }
 });
 
-// DELETE: delete a user by its id
+// DELETE: delete a user by ID
 app.delete("/user", async (req, res) => {
-  const userId = req.body.userId;
-
   try {
-    // const user = await User.findByIdAndDelete( { _id: userId} ) ;
+    const userId = req.body.userId;
+
     const user = await User.findByIdAndDelete(userId);
-    if (!user) res.status(404).send("user not found");
-    else res.send("user deleted successfully");
+
+    if (!user) {
+      return res.status(404).send("No user found with the specified ID.");
+    }
+
+    res.send("User deleted successfully");
   } catch (err) {
-    res.status(400).send("Something went wrong");
+    res.status(400).send(`Unable to delete user: ${err.message}`);
   }
 });
 
-// PATCH: update a user by id
+// PATCH: update a user by ID
 app.patch("/user/:userId", async (req, res) => {
   try {
     const data = req.body;
     const userId = req.params.userId;
 
     const ALLOWED_UPDATES = ["photoURL", "about", "gender", "age", "skills"];
-
     const isUpdateAllowed = Object.keys(data).every((k) =>
       ALLOWED_UPDATES.includes(k)
     );
 
     if (!isUpdateAllowed) {
-      throw new Error("Update not allowed");
+      throw new Error(
+        `Update not allowed. Allowed fields: ${ALLOWED_UPDATES.join(", ")}`
+      );
     }
 
-    const user = await User.findByIdAndUpdate({ _id: userId }, data, {
+    const user = await User.findByIdAndUpdate(userId, data, {
       returnDocument: "after",
       runValidators: true,
     });
-    console.log(user);
 
-    if (!user) res.status(404).send("User not found");
-    else res.send("user updated succesfully");
+    if (!user) {
+      return res.status(404).send("No user found with the specified ID.");
+    }
+
+    res.send("User updated successfully");
   } catch (err) {
-    res.status(400).send("Something went wrong: " + err.message);
+    res.status(400).send(`Unable to update user: ${err.message}`);
   }
 });
 
-// PATCH: update a user by emailid
+// PATCH: update a user by emailId
 app.patch("/userByEmail", async (req, res) => {
   try {
     const data = req.body;
     const userEmailId = req.body.emailId;
 
     const user = await User.updateOne({ emailId: userEmailId }, data);
-    if (!user) res.status(404).send("User not found");
-    else res.send("User updated successfully");
+
+    if (user.matchedCount === 0) {
+      return res.status(404).send("No user found with the specified email.");
+    }
+
+    res.send("User updated successfully");
   } catch (err) {
-    res.status(400).send("Something went wrong");
+    res.status(400).send(`Unable to update user: ${err.message}`);
   }
 });
 
+// connect to DB and start server
 connectDB()
   .then(() => {
     console.log("DB connected");
     app.listen(7777, () => {
-      console.log("Server opened");
+      console.log("Server started on port 7777");
     });
   })
   .catch((err) => {
-    console.error(err.message);
+    console.error(`Failed to connect to database: ${err.message}`);
   });
