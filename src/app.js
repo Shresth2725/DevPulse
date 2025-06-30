@@ -1,6 +1,8 @@
 const express = require("express");
 const connectDB = require("./config/database");
 const User = require("./models/user");
+const { validateSignUpData } = require("./utils/validation");
+const bcrypt = require("bcrypt");
 
 const app = express();
 
@@ -8,12 +10,29 @@ app.use(express.json());
 
 // POST: dynamic signup api
 app.post("/signup", async (req, res) => {
-  const user = new User(req.body);
-  req.body.firstName = req.body?.firstName?.trim();
-  req.body.lastName = req.body?.lastName?.trim();
-  req.body.about = req.body?.about?.trim();
-  req.body.emailId = req.body?.emailId?.toLowerCase().trim();
   try {
+    // Validation of Data
+    validateSignUpData(req);
+
+    // Sanitization of Data
+    req.body.firstName = req.body?.firstName?.trim();
+    req.body.lastName = req.body?.lastName?.trim();
+    req.body.emailId = req.body?.emailId?.toLowerCase().trim();
+
+    const { firstName, lastName, emailId, password } = req.body;
+
+    // Encrpting the password
+    const passwordHash = await bcrypt.hash(password, 10);
+    console.log(passwordHash);
+
+    // Creating a new instance of User Model
+    const user = new User({
+      firstName,
+      lastName,
+      emailId,
+      password: passwordHash,
+    });
+
     await user.save();
     res.send("User add succesfully");
   } catch (err) {
