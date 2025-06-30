@@ -3,6 +3,7 @@ const connectDB = require("./config/database");
 const User = require("./models/user");
 const { validateSignUpData } = require("./utils/validation");
 const bcrypt = require("bcrypt");
+const validator = require("validator");
 
 const app = express();
 
@@ -37,6 +38,35 @@ app.post("/signup", async (req, res) => {
     res.send("User add succesfully");
   } catch (err) {
     res.status(400).send("Error saving the user: " + err.message);
+  }
+});
+
+// POST: Login api
+app.post("/login", async (req, res) => {
+  try {
+    const { emailId, password } = req.body;
+
+    if (!validator.isEmail(emailId)) {
+      throw new Error("Email not valid");
+    }
+
+    const user = await User.findOne({ emailId: emailId });
+
+    if (!user) {
+      return res.status(404).send("User not found");
+    }
+
+    const hashedPassword = user.password;
+
+    const isPasswordValid = await bcrypt.compare(password, hashedPassword);
+
+    if (isPasswordValid) {
+      res.send("Login Successfully");
+    } else {
+      throw new Error("Password is not correct");
+    }
+  } catch (err) {
+    res.status(400).send("Something went wrong: " + err.message);
   }
 });
 
