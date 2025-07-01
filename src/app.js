@@ -4,9 +4,13 @@ const User = require("./models/user");
 const { validateSignUpData } = require("./utils/validation");
 const bcrypt = require("bcrypt");
 const validator = require("validator");
+const cookieParse = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 
 const app = express();
+
 app.use(express.json());
+app.use(cookieParse());
 
 // POST: signup
 app.post("/signup", async (req, res) => {
@@ -51,12 +55,36 @@ app.post("/login", async (req, res) => {
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (isPasswordValid) {
+      // Creating a JWT
+      const token = await jwt.sign({ _id: user.id }, "DEV@Pulse$1510");
+
+      // Creating a cookie and storing JWT init
+      res.cookie("token", token);
       res.send("Login successful");
     } else {
       throw new Error("Incorrect password. Please try again.");
     }
   } catch (err) {
     res.status(400).send(`Login failed: ${err.message}`);
+  }
+});
+
+// GET: profile
+app.get("/profile", async (req, res) => {
+  try {
+    const token = req.cookies.token;
+    if (!token) throw new Error("Invalid Token");
+
+    const decodedMessage = await jwt.verify(token, "DEV@Pulse$1510");
+    const { _id } = decodedMessage;
+
+    const user = await User.findById(_id);
+    if (!user) throw new Error("User does not exist");
+
+    console.log("Logged in user is: " + user.firstName);
+    res.send("User accesssed the Profile Successfully: " + user);
+  } catch (err) {
+    res.status(400).send("ERROR: " + err.message);
   }
 });
 
