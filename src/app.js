@@ -6,6 +6,7 @@ const bcrypt = require("bcrypt");
 const validator = require("validator");
 const cookieParse = require("cookie-parser");
 const jwt = require("jsonwebtoken");
+const { userAuth } = require("./middleware/auth");
 
 const app = express();
 
@@ -56,10 +57,14 @@ app.post("/login", async (req, res) => {
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (isPasswordValid) {
       // Creating a JWT
-      const token = await jwt.sign({ _id: user.id }, "DEV@Pulse$1510");
+      const token = await jwt.sign({ _id: user.id }, "DEV@Pulse$1510", {
+        expiresIn: "1d",
+      });
 
       // Creating a cookie and storing JWT init
-      res.cookie("token", token);
+      res.cookie("token", token, {
+        expires: new Date(Date.now()) + 1 * 3600000,
+      });
       res.send("Login successful");
     } else {
       throw new Error("Incorrect password. Please try again.");
@@ -70,17 +75,9 @@ app.post("/login", async (req, res) => {
 });
 
 // GET: profile
-app.get("/profile", async (req, res) => {
+app.get("/profile", userAuth, async (req, res) => {
   try {
-    const token = req.cookies.token;
-    if (!token) throw new Error("Invalid Token");
-
-    const decodedMessage = await jwt.verify(token, "DEV@Pulse$1510");
-    const { _id } = decodedMessage;
-
-    const user = await User.findById(_id);
-    if (!user) throw new Error("User does not exist");
-
+    const user = req.user;
     console.log("Logged in user is: " + user.firstName);
     res.send("User accesssed the Profile Successfully: " + user);
   } catch (err) {
@@ -88,97 +85,10 @@ app.get("/profile", async (req, res) => {
   }
 });
 
-// GET: get user by email
-app.get("/user", async (req, res) => {
-  try {
-    const userEmail = req.body.emailId;
-    const users = await User.find({ emailId: userEmail });
-
-    if (users.length === 0) {
-      return res.status(404).send("No user found with the specified email.");
-    }
-
-    res.send(users);
-  } catch (err) {
-    res.status(400).send(`Unable to fetch user: ${err.message}`);
-  }
-});
-
-// GET: get all users
-app.get("/feed", async (req, res) => {
-  try {
-    const users = await User.find({});
-    res.send(users);
-  } catch (err) {
-    res.status(400).send(`Unable to fetch users: ${err.message}`);
-  }
-});
-
-// DELETE: delete a user by ID
-app.delete("/user", async (req, res) => {
-  try {
-    const userId = req.body.userId;
-
-    const user = await User.findByIdAndDelete(userId);
-
-    if (!user) {
-      return res.status(404).send("No user found with the specified ID.");
-    }
-
-    res.send("User deleted successfully");
-  } catch (err) {
-    res.status(400).send(`Unable to delete user: ${err.message}`);
-  }
-});
-
-// PATCH: update a user by ID
-app.patch("/user/:userId", async (req, res) => {
-  try {
-    const data = req.body;
-    const userId = req.params.userId;
-
-    const ALLOWED_UPDATES = ["photoURL", "about", "gender", "age", "skills"];
-    const isUpdateAllowed = Object.keys(data).every((k) =>
-      ALLOWED_UPDATES.includes(k)
-    );
-
-    if (!isUpdateAllowed) {
-      throw new Error(
-        `Update not allowed. Allowed fields: ${ALLOWED_UPDATES.join(", ")}`
-      );
-    }
-
-    const user = await User.findByIdAndUpdate(userId, data, {
-      returnDocument: "after",
-      runValidators: true,
-    });
-
-    if (!user) {
-      return res.status(404).send("No user found with the specified ID.");
-    }
-
-    res.send("User updated successfully");
-  } catch (err) {
-    res.status(400).send(`Unable to update user: ${err.message}`);
-  }
-});
-
-// PATCH: update a user by emailId
-app.patch("/userByEmail", async (req, res) => {
-  try {
-    const data = req.body;
-    const userEmailId = req.body.emailId;
-
-    const user = await User.updateOne({ emailId: userEmailId }, data);
-
-    if (user.matchedCount === 0) {
-      return res.status(404).send("No user found with the specified email.");
-    }
-
-    res.send("User updated successfully");
-  } catch (err) {
-    res.status(400).send(`Unable to update user: ${err.message}`);
-  }
+//
+app.post("/sendConnectionRequest", userAuth, async (req, res) => {
+  console.log("sending connection");
+  res.send("connection req sent");
 });
 
 // connect to DB and start server
