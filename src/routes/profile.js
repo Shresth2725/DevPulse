@@ -42,7 +42,7 @@ profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
 profileRouter.patch("/profile/password", userAuth, async (req, res) => {
   try {
     if (!oldPassword || !newPassword) {
-      return res.status(400).send("Both old and new password are required");
+      throw new Error("Both new and old password are required");
     }
 
     const loggedInUser = req.user;
