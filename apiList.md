@@ -24,8 +24,8 @@
 
 ##userRouter:
 
-    - GET /connections
-    - GET /request/recevied
+    - GET /user/connections
+    - GET /user/request/received
     - GET /feed - Gets us the profiles of other users
 
 Status_Of_Connection :- 1. Ignore | 2. Interested:- a. Accecpted , b. Rejected
