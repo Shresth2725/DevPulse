@@ -13,7 +13,7 @@ const connectionRequestSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: {
-        values: ["ignored", "interested", "accecpted", "rejected"],
+        values: ["ignored", "interested", "accepted", "rejected"],
         message: `{VALUE} is incorrect status`,
       },
     },
@@ -26,7 +26,8 @@ const connectionRequestSchema = new mongoose.Schema(
 // Creating a compound index
 connectionRequestSchema.index({ fromUserId: 1, toUserId: 1 });
 
-connectionRequestSchema.pre("sava", function () {
+// Schema Validation for checking if both user Ids are same or not
+connectionRequestSchema.pre("save", function (next) {
   const connectionRequest = this;
   if (connectionRequest.fromUserId.equals(connectionRequest.toUserId)) {
     throw new Error("Both Ids should not be same");

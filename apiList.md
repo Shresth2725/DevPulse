@@ -16,8 +16,11 @@
 
     - POST /request/send/interested/:userId
     - POST /request/send/ignore/:userId
+    - POST /request/send/status/:userId // for both of the above
+
     - POST /request/review/accepted/:requestId
     - POST /request/review/rejected/:requestId
+    - POST /request/review/status/:requestId // for both of the above
 
 ##userRouter:
 
