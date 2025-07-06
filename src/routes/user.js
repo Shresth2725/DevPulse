@@ -81,7 +81,7 @@ userRouter.get("/user/request/received", userAuth, async (req, res) => {
 });
 
 // GET: fetch feed for user
-userRouter.get("/feed", userAuth, async (req, res) => {
+userRouter.get("/feed?page=1&limit=10", userAuth, async (req, res) => {
   try {
     // User should see all user except
     // 0. his own card
@@ -90,6 +90,12 @@ userRouter.get("/feed", userAuth, async (req, res) => {
     // 3. whom already interested in
 
     const loggedInUser = req.user;
+
+    const page = parseInt(req.query.page) || 1;
+    let limit = parseInt(req.query.limit) || 10;
+    limit = limit > 50 ? 50 : limit;
+    const skip = (page - 1) * limit;
+
     const connectionRequest = await connectionRequestModel
       .find({
         $or: [{ fromUserId: loggedInUser._id }, { toUserId: loggedInUser._id }],
@@ -107,7 +113,10 @@ userRouter.get("/feed", userAuth, async (req, res) => {
         { _id: { $nin: Array.from(hideUsersFromFeed) } },
         { _id: { $ne: loggedInUser._id } },
       ],
-    });
+    })
+      .select("firstName , lastName , age , skill , about ,gender , photoURL")
+      .skip(skip)
+      .limit(limit);
 
     if (!users) {
       throw new Error("No user left");
