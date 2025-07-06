@@ -81,7 +81,7 @@ userRouter.get("/user/request/received", userAuth, async (req, res) => {
 });
 
 // GET: fetch feed for user
-userRouter.get("/feed?page=1&limit=10", userAuth, async (req, res) => {
+userRouter.get("/feed", userAuth, async (req, res) => {
   try {
     // User should see all user except
     // 0. his own card
