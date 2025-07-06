@@ -89,7 +89,10 @@ requestRouter.post(
       connectionRequest.status = status;
       await connectionRequest.save();
 
-      res.send("Connection Request Accepted");
+      res.json({
+        message: "Connection Request Accepted",
+        data: connectionRequest,
+      });
     } catch (err) {
       res.status(400).send("ERROR: " + err.message);
     }

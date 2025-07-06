@@ -12,8 +12,10 @@ const profileRouter = express.Router();
 profileRouter.get("/profile/view", userAuth, async (req, res) => {
   try {
     const user = req.user;
-    console.log("Logged in user is: " + user.firstName);
-    res.send("User accesssed the Profile Successfully: " + user);
+    res.json({
+      message: "User accesssed the Profile Successfully",
+      data: user,
+    });
   } catch (err) {
     res.status(400).send("ERROR: " + err.message);
   }
@@ -66,7 +68,10 @@ profileRouter.patch("/profile/password", userAuth, async (req, res) => {
     loggedInUser.password = hashedNewPassword;
     await loggedInUser.save();
 
-    res.send("Password updated successfully");
+    res.json({
+      message: "Password updated successfully",
+      data: loggedInUser,
+    });
   } catch (err) {
     res.status(400).send("ERROR: " + err.message);
   }

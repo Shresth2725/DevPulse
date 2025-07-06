@@ -122,7 +122,10 @@ userRouter.get("/feed?page=1&limit=10", userAuth, async (req, res) => {
       throw new Error("No user left");
     }
 
-    res.send(users);
+    res.json({
+      message: "Feed fetched succesfully",
+      data: users,
+    });
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
