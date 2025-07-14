@@ -99,4 +99,22 @@ requestRouter.post(
   }
 );
 
+// POST: remove request
+requestRouter.post("/request/unsend/:id", userAuth, async (req, res) => {
+  try {
+    const loggedInUser = req.user;
+    const requestSentToUserId = req.params.id;
+
+    await connectionRequestModel.deleteOne({
+      fromUserId: loggedInUser._id,
+      toUserId: requestSentToUserId,
+      status: "interested",
+    });
+
+    res.json({ message: "Connection request removed" });
+  } catch (err) {
+    res.status(400).send("ERROR: " + err.message);
+  }
+});
+
 module.exports = requestRouter;

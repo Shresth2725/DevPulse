@@ -80,6 +80,34 @@ userRouter.get("/user/request/received", userAuth, async (req, res) => {
   }
 });
 
+// GET: fetch all the connection request you have sent
+userRouter.get("/user/request/sent", userAuth, async (req, res) => {
+  try {
+    const loggedInUser = req.user;
+
+    const sentConnectionRequest = await connectionRequestModel
+      .find({
+        fromUserId: loggedInUser._id,
+        status: "interested",
+      })
+      .populate(
+        "toUserId",
+        "firstName lastName age skills about gender photoUrl"
+      );
+
+    if (!sentConnectionRequest) {
+      throw new Error("No connection request left pending");
+    }
+
+    res.json({
+      message: "All the request of" + loggedInUser._id,
+      data: sentConnectionRequest,
+    });
+  } catch (err) {
+    res.status(400).send("ERROR: " + err.message);
+  }
+});
+
 // GET: fetch feed for user
 userRouter.get("/feed", userAuth, async (req, res) => {
   try {
