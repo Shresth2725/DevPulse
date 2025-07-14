@@ -42,12 +42,14 @@ authRouter.post("/login", async (req, res) => {
     const { emailId, password } = req.body;
 
     if (!validator.isEmail(emailId)) {
-      throw new Error("Invalid email address.");
+      throw new Error("Invalid credentials.");
     }
 
     const user = await User.findOne({ emailId });
     if (!user) {
-      return res.status(404).send("No user found with the provided email.");
+      return res
+        .status(404)
+        .send("No user found with the provided credentials.");
     }
 
     const isPasswordValid = await user.checkPassword(password);
@@ -65,10 +67,10 @@ authRouter.post("/login", async (req, res) => {
         data: user,
       });
     } else {
-      throw new Error("Incorrect password. Please try again.");
+      throw new Error("Incorrect credentials. Please try again.");
     }
   } catch (err) {
-    res.status(400).send(`Login failed: ${err.message}`);
+    res.status(400).send(`ERROR: ${err.message}`);
   }
 });
 

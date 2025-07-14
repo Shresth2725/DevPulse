@@ -17,11 +17,11 @@ userRouter.get("/user/connection", userAuth, async (req, res) => {
       })
       .populate(
         "fromUserId",
-        "firstName lastName age skill about gender photoURL"
+        "firstName lastName age skill about gender photoUrl"
       )
       .populate(
         "toUserId",
-        "firstName lastName age skill about gender photoURL"
+        "firstName lastName age skill about gender photoUrl"
       );
 
     const connectedUsers = connections.map((conn) => {
@@ -39,7 +39,7 @@ userRouter.get("/user/connection", userAuth, async (req, res) => {
         skill: connectedUser?.skill || [],
         about: connectedUser?.about || "",
         gender: connectedUser?.gender || "",
-        photoURL: connectedUser?.photoURL || "",
+        photoUrl: connectedUser?.photoUrl || "",
       };
     });
 
@@ -64,7 +64,7 @@ userRouter.get("/user/request/received", userAuth, async (req, res) => {
       })
       .populate(
         "fromUserId",
-        "firstName , lastName , age , skill , about ,gender , photoURL"
+        "firstName lastName age skills about gender photoUrl"
       );
 
     if (!getConnectionRequests) {
@@ -114,7 +114,7 @@ userRouter.get("/feed", userAuth, async (req, res) => {
         { _id: { $ne: loggedInUser._id } },
       ],
     })
-      .select("firstName , lastName , age , skill , about ,gender , photoURL")
+      .select("firstName , lastName , age , skill , about ,gender , photoUrl")
       .skip(skip)
       .limit(limit);
 
