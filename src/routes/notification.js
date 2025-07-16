@@ -46,10 +46,15 @@ notificationRouter.get("/notification/receive", userAuth, async (req, res) => {
   try {
     const loggedInUser = req.user;
 
-    const notifications = await notificationModel.find({
-      forUserId: loggedInUser._id,
-      isSeen: false,
-    });
+    const notifications = await notificationModel
+      .find({
+        forUserId: loggedInUser._id,
+        isSeen: false,
+      })
+      .populate(
+        "fromUserId",
+        "firstName lastName age skills about gender photoUrl"
+      );
 
     res.json({
       message: "All notifications fetch succesfully",
@@ -83,12 +88,10 @@ notificationRouter.get(
 
 notificationRouter.patch("/notification/seen", userAuth, async (req, res) => {
   try {
-    const userId = req.user._id;
+    // const userId = req.user._id;
+    const id = req.body.id;
 
-    await notificationModel.updateMany(
-      { forUserId: userId, isSeen: false },
-      { $set: { isSeen: true } }
-    );
+    await notificationModel.updateMany({ _id: id }, { $set: { isSeen: true } });
 
     res.json({
       message: "All notifications marked as seen successfully",
