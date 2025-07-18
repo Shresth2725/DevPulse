@@ -3,6 +3,10 @@ const validator = require("validator");
 const User = require("../models/user");
 const { validateSignUpData } = require("../utils/validation");
 const bcrypt = require("bcrypt");
+const { userAuth } = require("../middleware/auth");
+const notificationModel = require("../models/notification.js");
+
+const connectionRequestModel = require("../models/connectionRequest");
 
 const authRouter = express.Router();
 
@@ -98,6 +102,31 @@ authRouter.post("/logout", async (req, res) => {
     res.json({
       message: "User Logged Out",
     });
+  } catch (err) {
+    res.status(400).send("ERROR: " + err.message);
+  }
+});
+
+// POST: delete a user
+authRouter.post("/deleteUser", userAuth, async (req, res) => {
+  try {
+    const loggedInUser = req.user;
+    const loggedInUserId = loggedInUser._id;
+
+    // Delete all its notifcations
+    await notificationModel.deleteMany({
+      $or: [{ forUserId: loggedInUserId }, { fromUserId: loggedInUserId }],
+    });
+
+    // Delete all its connections
+    await connectionRequestModel.deleteMany({
+      $or: [{ fromUserId: loggedInUserId }, { toUserId: loggedInUserId }],
+    });
+
+    // Delete User
+    await User.deleteOne({ _id: loggedInUserId });
+
+    res.json({ message: "User delete successfully" });
   } catch (err) {
     res.status(400).send("ERROR: " + err.message);
   }
