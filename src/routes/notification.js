@@ -5,6 +5,7 @@ const { mongoose } = require("mongoose");
 
 const notificationRouter = express.Router();
 
+// POST: send notification
 notificationRouter.post("/notification/send", userAuth, async (req, res) => {
   try {
     const loggedInUser = req.user;
@@ -42,6 +43,7 @@ notificationRouter.post("/notification/send", userAuth, async (req, res) => {
   }
 });
 
+// GET: get unseen notification
 notificationRouter.get("/notification/receive", userAuth, async (req, res) => {
   try {
     const loggedInUser = req.user;
@@ -65,6 +67,7 @@ notificationRouter.get("/notification/receive", userAuth, async (req, res) => {
   }
 });
 
+// GET: get all notification history
 notificationRouter.get(
   "/notification/receive/all",
   userAuth,
@@ -86,6 +89,7 @@ notificationRouter.get(
   }
 );
 
+// PATCH: to make notification as seen
 notificationRouter.patch("/notification/seen", userAuth, async (req, res) => {
   try {
     // const userId = req.user._id;
