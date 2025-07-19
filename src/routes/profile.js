@@ -5,10 +5,11 @@ const {
   validateNewPassword,
 } = require("../utils/validation");
 const bcrypt = require("bcrypt");
+const User = require("../models/user");
 
 const profileRouter = express.Router();
 
-// GET: view a profile
+// GET: view logged in user profile
 profileRouter.get("/profile/view", userAuth, async (req, res) => {
   try {
     const user = req.user;
@@ -16,6 +17,23 @@ profileRouter.get("/profile/view", userAuth, async (req, res) => {
       message: "User accesssed the Profile Successfully",
       data: user,
     });
+  } catch (err) {
+    res.status(400).send("ERROR: " + err.message);
+  }
+});
+
+// GET: view a profile
+profileRouter.get("/profile/viewUser/:id", async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    const user = await User.findById(userId).select(
+      "firstName lastName age gender skills about photoUrl"
+    );
+
+    if (!user) return res.status(404).send("No user found");
+
+    res.json({ message: "User fetched successfully", data: user });
   } catch (err) {
     res.status(400).send("ERROR: " + err.message);
   }
