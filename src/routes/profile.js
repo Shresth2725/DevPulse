@@ -43,13 +43,17 @@ profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
 // PATCH: edit password
 profileRouter.patch("/profile/password", userAuth, async (req, res) => {
   try {
+    const loggedInUser = req.user;
+    const newPassword = req.body.newPassword;
+    const oldPassword = req.body.oldPassword;
+
     if (!oldPassword || !newPassword) {
       throw new Error("Both new and old password are required");
     }
 
-    const loggedInUser = req.user;
-    const newPassword = req.body.newPassword;
-    const oldPassword = req.body.oldPassword;
+    if (oldPassword === newPassword) {
+      throw new Error("Both old and new password cannot be same.");
+    }
 
     const passwordMatch = await bcrypt.compare(
       oldPassword,

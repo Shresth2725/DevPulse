@@ -75,9 +75,14 @@ notificationRouter.get(
     try {
       const loggedInUser = req.user;
 
-      const notifications = await notificationModel.find({
-        forUserId: loggedInUser._id,
-      });
+      const notifications = await notificationModel
+        .find({
+          forUserId: loggedInUser._id,
+        })
+        .populate(
+          "fromUserId",
+          "firstName lastName age skills about gender photoUrl"
+        );
 
       res.json({
         message: "All notifications fetch succesfully",
