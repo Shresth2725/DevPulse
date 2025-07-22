@@ -14,88 +14,90 @@ profileRouter.get("/profile/view", userAuth, async (req, res) => {
   try {
     const user = req.user;
     res.json({
-      message: "User accesssed the Profile Successfully",
+      message: "User accessed the profile successfully",
       data: user,
     });
   } catch (err) {
-    res.status(400).send("ERROR: " + err.message);
+    res.status(400).json({ message: err.message });
   }
 });
 
-// GET: view a profile
+// GET: view a profile by ID
 profileRouter.get("/profile/viewUser/:id", async (req, res) => {
   try {
-    const userId = req.params.id;
-
-    const user = await User.findById(userId).select(
+    const user = await User.findById(req.params.id).select(
       "firstName lastName age gender skills about photoUrl"
     );
 
-    if (!user) return res.status(404).send("No user found");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-    res.json({ message: "User fetched successfully", data: user });
+    res.json({
+      message: "User fetched successfully",
+      data: user,
+    });
   } catch (err) {
-    res.status(400).send("ERROR: " + err.message);
+    res.status(400).json({ message: err.message });
   }
 });
 
-// PATCH: edit a profile
+// PATCH: edit logged-in user profile
 profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
   try {
     if (!validateProfileEditData(req)) {
-      throw new Error("Invalid Edit Request");
+      throw new Error("Invalid edit request data");
     }
 
-    const loggedInUser = req.user;
+    const user = req.user;
 
-    Object.keys(req.body).forEach((key) => (loggedInUser[key] = req.body[key]));
+    Object.keys(req.body).forEach((key) => {
+      if (key in user) user[key] = req.body[key];
+    });
 
-    loggedInUser.save();
+    await user.save();
 
-    res.json({ message: "Profile Updated Successfully", data: loggedInUser });
+    res.json({
+      message: "Profile updated successfully",
+      data: user,
+    });
   } catch (err) {
-    res.status(400).send("ERROR: " + err.message);
+    res.status(400).json({ message: err.message });
   }
 });
 
-// PATCH: edit password
+// PATCH: change password
 profileRouter.patch("/profile/password", userAuth, async (req, res) => {
   try {
-    const loggedInUser = req.user;
-    const newPassword = req.body.newPassword;
-    const oldPassword = req.body.oldPassword;
+    const { oldPassword, newPassword } = req.body;
+    const user = req.user;
 
     if (!oldPassword || !newPassword) {
-      throw new Error("Both new and old password are required");
+      throw new Error("Both old and new passwords are required");
     }
 
     if (oldPassword === newPassword) {
-      throw new Error("Both old and new password cannot be same.");
+      throw new Error("Old and new passwords cannot be the same");
     }
 
-    const passwordMatch = await bcrypt.compare(
-      oldPassword,
-      loggedInUser.password
-    );
-    if (!passwordMatch) {
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
       throw new Error("Old password is incorrect");
     }
 
     if (!validateNewPassword(req)) {
-      throw new Error("New Password not Strong");
+      throw new Error("New password is not strong enough");
     }
 
-    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
-
-    loggedInUser.password = hashedNewPassword;
-    await loggedInUser.save();
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
 
     res.json({
       message: "Password updated successfully",
-      data: loggedInUser,
     });
   } catch (err) {
-    res.status(400).send("ERROR: " + err.message);
+    res.status(400).json({ message: err.message });
   }
 });
+
 module.exports = profileRouter;

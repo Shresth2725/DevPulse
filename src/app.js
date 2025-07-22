@@ -1,32 +1,35 @@
 const express = require("express");
 const connectDB = require("./config/database");
-const cookieParse = require("cookie-parser");
+const cookieParser = require("cookie-parser");
 const cors = require("cors");
 
 const app = express();
 
+// CORS setup to allow cookies
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: true,
     credentials: true,
   })
 );
-app.use(express.json());
-app.use(cookieParse());
 
+app.use(express.json());
+app.use(cookieParser()); // ✅ Use correct spelling
+
+// Routes
 const authRouter = require("./routes/auth");
 const profileRouter = require("./routes/profile");
 const requestRouter = require("./routes/request");
 const userRouter = require("./routes/user");
 const notificationRouter = require("./routes/notification");
 
-app.use("/", authRouter);
-app.use("/", profileRouter);
-app.use("/", requestRouter);
-app.use("/", userRouter);
-app.use("/", notificationRouter);
+app.use("/api", authRouter);
+app.use("/api", profileRouter);
+app.use("/api", requestRouter);
+app.use("/api", userRouter);
+app.use("/api", notificationRouter);
 
-// connect to DB and start server
+// DB connection and server start
 connectDB()
   .then(() => {
     console.log("DB connected");
