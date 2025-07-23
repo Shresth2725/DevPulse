@@ -14,7 +14,7 @@ app.use(
 );
 
 app.use(express.json());
-app.use(cookieParser()); // ✅ Use correct spelling
+app.use(cookieParser());
 
 // Routes
 const authRouter = require("./routes/auth");
