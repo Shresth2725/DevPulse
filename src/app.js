@@ -3,6 +3,8 @@ const connectDB = require("./config/database");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 
+require("dotenv").config();
+
 const app = express();
 
 // CORS setup to allow cookies
@@ -33,7 +35,7 @@ app.use("/", notificationRouter);
 connectDB()
   .then(() => {
     console.log("DB connected");
-    app.listen(7777, () => {
+    app.listen(process.env.PORT, () => {
       console.log("Server started on port 7777");
     });
   })
