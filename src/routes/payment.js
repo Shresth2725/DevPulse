@@ -77,11 +77,11 @@ paymentRoute.post("/payment/webhook", async (req, res) => {
     user.memberShipType = payment.notes.memberShipType;
     await user.save();
 
-    if (req.body.event === "payment.capture") {
-    }
+    // if (req.body.event === "payment.capture") {
+    // }
 
-    if (req.body.event === "payment.failed") {
-    }
+    // if (req.body.event === "payment.failed") {
+    // }
 
     // return success response to razorpay
     return res.status(200).json({ msg: "WebHook received successfully" });
