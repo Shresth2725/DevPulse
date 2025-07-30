@@ -26,7 +26,7 @@ profileRouter.get("/profile/view", userAuth, async (req, res) => {
 profileRouter.get("/profile/viewUser/:id", async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select(
-      "firstName lastName age gender skills about photoUrl"
+      "firstName lastName age gender skills about photoUrl isPremium"
     );
 
     if (!user) {
