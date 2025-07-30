@@ -27,6 +27,7 @@ const requestRouter = require("./routes/request");
 const userRouter = require("./routes/user");
 const notificationRouter = require("./routes/notification");
 const chatRouter = require("./routes/chat");
+const paymentRoute = require("./routes/payment");
 
 app.use("/", authRouter);
 app.use("/", profileRouter);
@@ -34,6 +35,7 @@ app.use("/", requestRouter);
 app.use("/", userRouter);
 app.use("/", notificationRouter);
 app.use("/", chatRouter);
+app.use("/", paymentRoute);
 
 const server = http.createServer(app);
 
