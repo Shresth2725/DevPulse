@@ -10,7 +10,7 @@ const {
 
 const paymentRoute = express.Router();
 
-// Create payment order
+// POST: Create payment order
 paymentRoute.post("/payment/create", userAuth, async (req, res) => {
   try {
     const plan = req.body.plan;
@@ -49,7 +49,7 @@ paymentRoute.post("/payment/create", userAuth, async (req, res) => {
   }
 });
 
-// Handle webhook
+// POST: Handle webhook
 paymentRoute.post("/payment/webhook", async (req, res) => {
   try {
     const webhookSignature = req.get("x-razorpay-signature");
@@ -84,6 +84,15 @@ paymentRoute.post("/payment/webhook", async (req, res) => {
   } catch (err) {
     console.error(err.message);
     res.status(400).json({ message: "Invalid webhook or error processing" });
+  }
+});
+
+paymentRoute.get("/payment/status", userAuth, async (req, res) => {
+  const user = req.user;
+  if (user.isPremium) {
+    return res.json({ isPremium: true });
+  } else {
+    return res.json({ isPremium: false });
   }
 });
 
