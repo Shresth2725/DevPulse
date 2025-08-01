@@ -6,11 +6,9 @@ const cloudinary = require("../utils/cloudinaryConfig");
 
 const uploadRouter = express.Router();
 
-// Ensure temp folder exists
 const tempDir = path.join(__dirname, "../temp");
 if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
 
-// Multer storage + size limit
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, tempDir),
   filename: (req, file, cb) =>
@@ -19,10 +17,10 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
 });
 
-// POST: Upload image to Cloudinary
+// Upload route
 uploadRouter.post(
   "/upload",
   (req, res, next) => {
@@ -32,25 +30,35 @@ uploadRouter.post(
           .status(400)
           .json({ message: "File too large. Max 5MB allowed." });
       }
-      if (err) return res.status(500).json({ message: "Unexpected error" });
+      if (err) {
+        console.error("Multer error:", err);
+        return res.status(500).json({ message: "Upload error" });
+      }
       next();
     });
   },
   async (req, res) => {
     try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file received." });
+      }
+
+      console.log("File from phone:", req.file);
+
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: "assets",
       });
-      fs.unlinkSync(req.file.path); // delete temp file
+
+      fs.unlinkSync(req.file.path);
       res.json({ url: result.secure_url });
     } catch (err) {
-      console.error("Upload error:", err);
-      res.status(500).json({ message: "Cloudinary upload failed" });
+      console.error("Cloudinary upload failed:", err);
+      res.status(500).json({ message: "Upload failed" });
     }
   }
 );
 
-// Optional: GET recent images from Cloudinary
+// Optional: fetch all images
 uploadRouter.get("/images", async (req, res) => {
   try {
     const result = await cloudinary.search
@@ -62,8 +70,8 @@ uploadRouter.get("/images", async (req, res) => {
     const urls = result.resources.map((file) => file.secure_url);
     res.json(urls);
   } catch (err) {
-    console.error("Fetch error:", err);
-    res.status(500).json({ message: "Failed to fetch images" });
+    console.error("Image fetch failed:", err);
+    res.status(500).json({ message: "Fetch failed" });
   }
 });
 
