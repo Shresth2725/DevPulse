@@ -6,32 +6,51 @@ const cloudinary = require("../utils/cloudinaryConfig");
 
 const uploadRouter = express.Router();
 
-// Temporary storage in server using diskStorage
+// Ensure temp folder exists
+const tempDir = path.join(__dirname, "../temp");
+if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
+
+// Multer storage + size limit
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "temp/"),
+  destination: (req, file, cb) => cb(null, tempDir),
   filename: (req, file, cb) =>
     cb(null, Date.now() + path.extname(file.originalname)),
 });
 
-const upload = multer({ storage });
-
-// POST: Upload image to Cloudinary
-uploadRouter.post("/upload", upload.single("image"), async (req, res) => {
-  try {
-    const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: "assets",
-    });
-
-    fs.unlinkSync(req.file.path); // clean up temp file
-
-    res.json({ url: result.secure_url });
-  } catch (err) {
-    console.error("Upload error:", err);
-    res.status(500).json({ message: "Upload failed" });
-  }
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
 });
 
-// GET: Fetch images from 'assets' folder in Cloudinary
+// POST: Upload image to Cloudinary
+uploadRouter.post(
+  "/upload",
+  (req, res, next) => {
+    upload.single("image")(req, res, function (err) {
+      if (err?.code === "LIMIT_FILE_SIZE") {
+        return res
+          .status(400)
+          .json({ message: "File too large. Max 5MB allowed." });
+      }
+      if (err) return res.status(500).json({ message: "Unexpected error" });
+      next();
+    });
+  },
+  async (req, res) => {
+    try {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "assets",
+      });
+      fs.unlinkSync(req.file.path); // delete temp file
+      res.json({ url: result.secure_url });
+    } catch (err) {
+      console.error("Upload error:", err);
+      res.status(500).json({ message: "Cloudinary upload failed" });
+    }
+  }
+);
+
+// Optional: GET recent images from Cloudinary
 uploadRouter.get("/images", async (req, res) => {
   try {
     const result = await cloudinary.search
