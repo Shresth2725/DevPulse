@@ -1,26 +1,36 @@
 const express = require("express");
 const multer = require("multer");
-const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const fs = require("fs");
+const path = require("path");
 const cloudinary = require("../utils/cloudinaryConfig");
 
 const uploadRouter = express.Router();
 
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: "assets",
-    allowed_formats: ["jpg", "png", "jpeg"],
-  },
+// Multer setup: store file temporarily in /temp folder
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, "temp/"),
+  filename: (req, file, cb) =>
+    cb(null, Date.now() + path.extname(file.originalname)),
 });
-
 const upload = multer({ storage });
 
-// POST: Upload image
-uploadRouter.post("/upload", upload.single("image"), (req, res) => {
-  res.json({ url: req.file.path });
+// POST: Upload to Cloudinary
+uploadRouter.post("/upload", upload.single("image"), async (req, res) => {
+  try {
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: "assets", // optional: your Cloudinary folder name
+    });
+
+    fs.unlinkSync(req.file.path); // remove file from server
+
+    res.json({ url: result.secure_url }); // send Cloudinary URL
+  } catch (err) {
+    console.error("Upload error:", err);
+    res.status(500).json({ message: "Upload failed" });
+  }
 });
 
-// GET: Get all images in the 'assets' folder
+// GET: Fetch images from Cloudinary folder
 uploadRouter.get("/images", async (req, res) => {
   try {
     const result = await cloudinary.search
@@ -32,7 +42,7 @@ uploadRouter.get("/images", async (req, res) => {
     const urls = result.resources.map((file) => file.secure_url);
     res.json(urls);
   } catch (err) {
-    console.error("Cloudinary fetch error:", err);
+    console.error("Fetch error:", err);
     res.status(500).json({ message: "Failed to fetch images" });
   }
 });
