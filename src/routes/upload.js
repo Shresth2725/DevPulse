@@ -6,31 +6,32 @@ const cloudinary = require("../utils/cloudinaryConfig");
 
 const uploadRouter = express.Router();
 
-// Multer setup: store file temporarily in /temp folder
+// Temporary storage in server using diskStorage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "temp/"),
   filename: (req, file, cb) =>
     cb(null, Date.now() + path.extname(file.originalname)),
 });
+
 const upload = multer({ storage });
 
-// POST: Upload to Cloudinary
+// POST: Upload image to Cloudinary
 uploadRouter.post("/upload", upload.single("image"), async (req, res) => {
   try {
     const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: "assets", // optional: your Cloudinary folder name
+      folder: "assets",
     });
 
-    fs.unlinkSync(req.file.path); // remove file from server
+    fs.unlinkSync(req.file.path); // clean up temp file
 
-    res.json({ url: result.secure_url }); // send Cloudinary URL
+    res.json({ url: result.secure_url });
   } catch (err) {
     console.error("Upload error:", err);
     res.status(500).json({ message: "Upload failed" });
   }
 });
 
-// GET: Fetch images from Cloudinary folder
+// GET: Fetch images from 'assets' folder in Cloudinary
 uploadRouter.get("/images", async (req, res) => {
   try {
     const result = await cloudinary.search
