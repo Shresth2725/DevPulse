@@ -41,6 +41,14 @@ app.use("/", paymentRoute);
 app.use("/", uploadRouter);
 app.use("/", postRouter);
 
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    uptime: process.uptime()
+  });
+});
+
+
 const server = http.createServer(app);
 
 intializeSocket(server);
