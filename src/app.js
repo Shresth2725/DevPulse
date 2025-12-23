@@ -1,4 +1,4 @@
-const express = require("expresss");
+const express = require("express");
 const connectDB = require("./config/database");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
